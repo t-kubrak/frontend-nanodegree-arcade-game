@@ -1,11 +1,16 @@
 // Enemies our player must avoid
-var Enemy = function() {
+var Enemy = function(x, y) {
     // Variables applied to each of our instances go here,
     // we've provided one for you to get started
 
     // The image/sprite for our enemies, this uses
     // a helper we've provided to easily load images
     this.sprite = 'images/enemy-bug.png';
+    this.x = x;
+    this.y = y;
+    this.speed = Math.random()*100+150;
+    this.width = 101;
+    this.height = 84;
 };
 
 // Update the enemy's position, required method for game
@@ -14,6 +19,11 @@ Enemy.prototype.update = function(dt) {
     // You should multiply any movement by the dt parameter
     // which will ensure the game runs at the same speed for
     // all computers.
+    this.x += this.speed*dt;
+    if(this.x > ctx.canvas.width){
+        this.x = -171;
+        this.speed = Math.random()*100+150;
+    }
 };
 
 // Draw the enemy on the screen, required method for game
@@ -24,13 +34,84 @@ Enemy.prototype.render = function() {
 // Now write your own player class
 // This class requires an update(), render() and
 // a handleInput() method.
+var Player = function(x, y) {
+    this.sprite = 'images/char-boy.png';
+    this.x = x;
+    this.y = y;
+    this.width = 70;
+    this.height = 75;
+};
 
+Player.prototype.win = function () {
+    this.restart();
+};
+
+Player.prototype.lose = function () {
+    this.restart();
+};
+
+Player.prototype.checkCollisions = function () {
+    var player = this;
+    allEnemies.forEach(function(enemy){
+        var horizontalCollision = enemy.x+enemy.width >= player.x+(player.width/2) && enemy.x <= player.x+player.width,
+            verticalCollision = enemy.y >= player.y && enemy.y < player.y+player.height;
+       if(horizontalCollision && verticalCollision) {
+           player.lose();
+       }
+    });
+};
+
+Player.prototype.restart = function () {
+    this.y = ctx.canvas.height - 171 - 60;
+    this.x = ctx.canvas.width / 2 - 50;
+};
+
+Player.prototype.update = function () {
+    this.checkCollisions();
+    if(this.y < 0){
+       this.win();
+    }
+};
+
+Player.prototype.render = function () {
+    ctx.drawImage(Resources.get(this.sprite), this.x, this.y);
+};
+
+Player.prototype.handleInput = function (e) {
+    var maxHeight = ctx.canvas.height - 171,
+        maxWidth = ctx.canvas.width,
+        minHeight = 0,
+        minWidth = 0,
+        verticalStep = 83,
+        horizontalStep = 101;
+
+  switch(e){
+      case 'left':
+          if(this.x - horizontalStep > minWidth){
+              this.x -= horizontalStep;
+          }
+          break;
+      case 'up':
+              this.y -= verticalStep;
+          break;
+      case 'right':
+          if(this.x + horizontalStep < maxWidth){
+              this.x += horizontalStep;
+          }
+          break;
+      case  'down':
+          if(this.y + verticalStep < maxHeight){
+              this.y += verticalStep;
+          }
+          break;
+  }
+};
 
 // Now instantiate your objects.
 // Place all enemy objects in an array called allEnemies
 // Place the player object in a variable called player
-
-
+var allEnemies = [new Enemy(0, 60), new Enemy(0, 144), new Enemy(0, 228), new Enemy(-400, 60), new Enemy(-400, 228)];
+var player = new Player(ctx.canvas.width / 2 - 50, ctx.canvas.height - 171 - 60);
 
 // This listens for key presses and sends the keys to your
 // Player.handleInput() method. You don't need to modify this.
